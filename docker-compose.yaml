@@ -1,0 +1,45 @@
+version: '2'
+
+services:
+
+  frontend:
+    build:
+      context: ./../CatCode.Frontend.App
+      dockerfile: Dockerfile
+    depends_on:
+      - data-mocker
+    networks:
+      - app-network
+
+  data-mocker:
+    build:
+      context: ./../CatCode.Testing.ResourceGenerator
+      dockerfile: Dockerfile
+    depends_on:
+      - core-api
+    networks:
+      - app-network
+
+  core-api:
+    build:
+      context: ./../CatCode.Service.CoreAPI
+      dockerfile: Dockerfile
+    depends_on:
+      - etcd
+    networks:
+      - app-network
+
+  etcd:
+    image: 'bitnami/etcd:latest'
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+    ports:
+      - 2379:2379
+      - 2380:2380
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
