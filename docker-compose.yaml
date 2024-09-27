@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 
 services:
 
@@ -9,7 +9,8 @@ services:
     depends_on:
       - data-mocker
     networks:
-      - app-network
+      - my-network
+
 
   data-mocker:
     build:
@@ -18,7 +19,7 @@ services:
     depends_on:
       - core-api
     networks:
-      - app-network
+      - my-network
 
   core-api:
     build:
@@ -26,20 +27,24 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - etcd
+    ports:
+      - 8000:8000
     networks:
-      - app-network
+      - my-network
+    volumes:
+      - ./core-api-appconfig:/app/appconfig.Production.yaml  # Ingest a file from the host
 
   etcd:
     image: 'bitnami/etcd:latest'
     environment:
       - ALLOW_NONE_AUTHENTICATION=yes
       - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+    networks:
+      - my-network
     ports:
       - 2379:2379
       - 2380:2380
-    networks:
-      - app-network
 
 networks:
-  app-network:
+  my-network:
     driver: bridge
