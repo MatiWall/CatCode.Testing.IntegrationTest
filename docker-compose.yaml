@@ -2,24 +2,38 @@ version: '3'
 
 services:
 
-  frontend:
-    build:
-      context: ./../CatCode.Frontend.App
-      dockerfile: Dockerfile
-    depends_on:
-      - data-mocker
-    networks:
-      - my-network
+#  frontend:
+#    build:
+#      context: ./../CatCode.Frontend.App
+#      dockerfile: Dockerfile
+#    depends_on:
+#      - data-mocker
+#    networks:
+#      - my-network
 
 
-  data-mocker:
+#  data-mocker:
+#    build:
+#      context: ./../CatCode.Testing.ResourceGenerator
+#      dockerfile: Dockerfile
+#    depends_on:
+#      - git-reconciliation
+#    networks:
+#      - my-network
+#    volumes:
+#      - ./resource-mocker-appconfig.yaml:/app/appconfig.Production.yaml  # Ingest a file from the host
+
+  git-reconciliation:
     build:
-      context: ./../CatCode.Testing.ResourceGenerator
+      context: ./../CatCode.Service.GitOpsReconciliation
       dockerfile: Dockerfile
     depends_on:
-      - core-api
+      core-api:
+        condition: service_healthy
     networks:
       - my-network
+    volumes:
+      - ./git-reconciliation-appconfig.yaml:/app/appconfig.Production.yaml  # Ingest a file from the host
 
   core-api:
     build:
@@ -32,7 +46,12 @@ services:
     networks:
       - my-network
     volumes:
-      - ./core-api-appconfig:/app/appconfig.Production.yaml  # Ingest a file from the host
+      - ./core-api-appconfig.yaml:/app/appconfig.Production.yaml  # Ingest a file from the host
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://core-api:8000/health/live"]
+      interval: 5s  # Check every 30 seconds
+      timeout: 10s   # Fail if it takes longer than 10 seconds
+      retries: 5     # Retry up to 5 times before marking as unhealthy
 
   etcd:
     image: 'bitnami/etcd:latest'

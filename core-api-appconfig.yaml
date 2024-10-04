@@ -1,1 +1,1 @@
-etch_host: "httpp://etcd:2379"
+etcd_host: "http://etcd:2379"
